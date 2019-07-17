@@ -1,0 +1,70 @@
+def df_to_geojson(df, properties, lat='latitude', lon='longitude'):
+    geojson = {'type':'FeatureCollection', 'features':[]}
+    for _, row in df.iterrows():
+        feature = {'type':'Feature',
+                   'properties':{},
+                   'geometry':{'type':'Point',
+                               'coordinates':[]}}
+        feature['geometry']['coordinates'] = [row[lon],row[lat]]
+        for prop in properties:
+            feature['properties'][prop] = row[prop]
+        geojson['features'].append(feature)
+    return geojson
+
+-------------------
+
+
+import pandas as pd
+import geojson
+
+def data2geojson(df):
+    features = []
+    insert_features = lambda X: features.append(
+            geojson.Feature(geometry=geojson.Point((X["long"],
+                                                    X["lat"],
+                                                    X["elev"])),
+                            properties=dict(name=X["name"],
+                                            description=X["description"])))
+    df.apply(insert_features, axis=1)
+    with open('map1.geojson', 'w', encoding='utf8') as fp:
+        geojson.dump(geojson.FeatureCollection(features), fp, sort_keys=True, ensure_ascii=False)
+
+col = ['lat','long','elev','name','description']
+data = [[-29.9953,-70.5867,760,'A','Place ñ'],
+        [-30.1217,-70.4933,1250,'B','Place b'],
+        [-30.0953,-70.5008,1185,'C','Place c']]
+
+df = pd.DataFrame(data, columns=col)
+
+data2geojson(df)
+
+
+
+-------------
+
+
+
+Here is a short code that adds properties to a GeoJSON from a Python dictionary:
+
+import json
+
+with open('yourgeojson.geojson', 'r') as f:
+    data = json.load(f)
+
+#A Python dictionary containing properties to be added to each GeoJSON Feature
+properties_dict={
+    "property1": "foo",
+    "property2": 10,
+    "property3": 100
+    }
+#Convert the dictionary to a list
+properties_list=zip(properties_dict.keys(),properties_dict.values())
+
+#Loop over GeoJSON features and add the new properties
+for feat in data['features']:
+    for i in range(len(properties_list)):
+        feat ['properties'][properties_list[i][0]]=properties_list[i][1]
+
+#Write result to a new file
+with open('new.geojson', 'w') as f:
+    json.dump(data, f)
